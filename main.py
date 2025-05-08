@@ -274,282 +274,55 @@ class PDFStudyTypingTrainer:
         ttk.Button(self.stats_tab, text="Export Statistics", 
                    command=self._export_statistics).pack(pady=10)
     
-    # Here's the implementation for a simplified text input feature focusing on structured practice sessions
-
-def _setup_text_input_tab(self):
-    """Set up a simplified text input tab focused on structured typing practice"""
-    # Main frame
-    main_frame = ttk.Frame(self.text_input_tab)
-    main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-    
-    # Header
-    ttk.Label(main_frame, text="Structured Typing Practice", 
-            font=("Arial", 16, "bold")).pack(anchor=tk.W, pady=10)
-    
-    # Brief description
-    description = (
-        "Enter your study content below, and it will be processed into a structured practice session "
-        "with warm-up, content drills, adaptive challenges, and error-focused practice."
-    )
-    ttk.Label(main_frame, text=description, wraplength=800).pack(anchor=tk.W, pady=5)
-    
-    # Session structure frame
-    structure_frame = ttk.LabelFrame(main_frame, text="Practice Session Structure")
-    structure_frame.pack(fill=tk.X, pady=10)
-    
-    session_structure = (
-        "1. Quick Warm-Up (2-3 min): Loosen up fingers and get into typing mode\n"
-        "2. Targeted Content Drill (8-10 min): Type your study content with moderate pace\n"
-        "3. Adaptive Challenge Cycle (5-7 min): Push comfort zone with increased pace\n"
-        "4. Error-Focus Micro-Session (3-5 min): Practice difficult words/phrases\n"
-        "5. Review & Reflect (2-3 min): See progress and performance statistics\n"
-        "6. Spaced-Repetition Scheduling: Automatically plan future practice"
-    )
-    
-    ttk.Label(structure_frame, text=session_structure, 
-             justify=tk.LEFT, wraplength=800).pack(padx=10, pady=10)
-    
-    # Text input frame
-    input_frame = ttk.LabelFrame(main_frame, text="Enter Your Study Content")
-    input_frame.pack(fill=tk.BOTH, expand=True, pady=10)
-    
-    # Text area for input
-    self.practice_text = tk.Text(input_frame, wrap=tk.WORD, height=15)
-    self.practice_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-    
-    # Sample text button
-    def insert_sample():
-        sample_text = (
-            "Quick Warm-Up (2–3 minutes)\n"
-            "* Purpose: Loosen up your fingers, get into \"typing mode.\"\n"
-            "* How: A free-text drill on any neutral filler text—no pressure on accuracy, just get the rhythm and posture right.\n\n"
-            "Targeted Content Drill (8–10 minutes)\n"
-            "* Purpose: Reinforce the actual material you need to learn.\n"
-            "* How: The app breaks content into bite-sized chunks and you type through each one.\n\n"
-            "Adaptive Challenge Cycle (5–7 minutes)\n"
-            "* Purpose: Push your comfort zone without overwhelming you.\n"
-            "* How: Based on your accuracy, the app will raise the pace or repeat missed chunks.\n\n"
-            "Error-Focus Micro-Session (3–5 minutes)\n"
-            "* Purpose: Zero in on the exact words or keystrokes giving you trouble.\n"
-            "* How: Practice rapid-fire on just the items you missed until you master them.\n\n"
-            "Review & Reflect (2–3 minutes)\n"
-            "* Purpose: Let the learning consolidate and give you clear takeaways.\n"
-            "* How: Review your performance statistics and progress over time.\n\n"
-            "Spaced-Repetition Scheduling\n"
-            "* Purpose: Move content out of short-term memory and into long-term recall.\n"
-            "* How: Items are automatically scheduled for future review based on your performance."
-        )
-        self.practice_text.delete("1.0", tk.END)
-        self.practice_text.insert("1.0", sample_text)
-    
-    # Buttons frame
-    buttons_frame = ttk.Frame(main_frame)
-    buttons_frame.pack(fill=tk.X, pady=10)
-    
-    ttk.Button(buttons_frame, text="Insert Sample", 
-              command=insert_sample).pack(side=tk.LEFT, padx=5)
-    
-    ttk.Button(buttons_frame, text="Generate Practice Session", 
-              command=self._generate_practice_session).pack(side=tk.RIGHT, padx=5)
-    
-    ttk.Button(buttons_frame, text="Load from File", 
-              command=self._load_study_text).pack(side=tk.RIGHT, padx=5)
-    
-    ttk.Button(buttons_frame, text="Load from Clipboard", 
-              command=self._load_from_clipboard).pack(side=tk.RIGHT, padx=5)
-    
-    # Status info
-    status_frame = ttk.Frame(main_frame)
-    status_frame.pack(fill=tk.X, pady=10)
-    
-    self.item_count_var = tk.StringVar(value="Items to practice: 0")
-    ttk.Label(status_frame, textvariable=self.item_count_var).pack(side=tk.LEFT)
-    
-    ttk.Button(status_frame, text="Start Practice", 
-              command=self._start_structured_practice, state=tk.DISABLED).pack(side=tk.RIGHT)
-
-def _generate_practice_session(self):
-    """Generate a structured practice session from the input text"""
-    # Get text content
-    content = self.practice_text.get("1.0", tk.END).strip()
-    
-    if not content:
-        messagebox.showwarning("Empty Content", "Please enter some text for practice.")
-        return
-    
-    # Process the content into different practice segments
-    self._process_practice_content(content)
-
-def _process_practice_content(self, content):
-    """Process the content into structured practice items"""
-    # Split content into paragraphs and then into sentences
-    paragraphs = content.split('\n\n')
-    practice_items = []
-    
-    for paragraph in paragraphs:
-        if not paragraph.strip():
-            continue
-            
-        # Process paragraph as a unit for longer content
-        if len(paragraph) > 100:
-            # For long paragraphs, create a paragraph-level item
-            practice_items.append(self._create_practice_item(
-                paragraph, "Paragraph", "Content Drill"
-            ))
-            
-            # Also split into sentences for more focused practice
-            sentences = self._split_into_sentences(paragraph)
-            for sentence in sentences:
-                if len(sentence) > 10:  # Only include meaningful sentences
-                    practice_items.append(self._create_practice_item(
-                        sentence, "Sentence", "Content Drill"
-                    ))
-        else:
-            # For shorter paragraphs, just add as a single item
-            practice_items.append(self._create_practice_item(
-                paragraph, "Short Paragraph", "Content Drill"
-            ))
-    
-    # Create warm-up items (general typing practice)
-    warm_up_text = [
-        "The quick brown fox jumps over the lazy dog.",
-        "Pack my box with five dozen liquor jugs.",
-        "How vexingly quick daft zebras jump!",
-        "Sphinx of black quartz, judge my vow."
-    ]
-    
-    for text in warm_up_text:
-        practice_items.append(self._create_practice_item(
-            text, "Warm-up", "Quick Warm-Up"
-        ))
-    
-    # Add the items to the study collection
-    self.study_items = []
-    
-    for item in practice_items:
-        self.study_items.append(item)
+    def _setup_text_input_tab(self):
+        """Set up the manual text input tab with improved parsing options"""
+        # Main frame
+        main_frame = ttk.Frame(self.text_input_tab)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
         
-        # Add to collection
-        if not hasattr(self, 'study_collection') or self.study_collection is None:
-            self.study_collection = StudyItemCollection()
-        self.study_collection.add_item(item)
-    
-    # Update learning tracker and challenge generator
-    if not hasattr(self, 'learning_tracker') or self.learning_tracker is None:
-        self.learning_tracker = LearningTracker()
-    self.learning_tracker.load_study_items(practice_items)
-    
-    if not hasattr(self, 'challenge_generator') or self.challenge_generator is None:
-        self.challenge_generator = ChallengeGenerator(self.study_items)
-    else:
-        self.challenge_generator.add_items(practice_items)
-    
-    # Update item count
-    self.item_count_var.set(f"Items to practice: {len(practice_items)}")
-    
-    # Enable start practice button
-    for widget in self.text_input_tab.winfo_children():
-        if isinstance(widget, ttk.Frame):
-            for child in widget.winfo_children():
-                if isinstance(child, ttk.Frame):
-                    for btn in child.winfo_children():
-                        if isinstance(btn, ttk.Button) and btn["text"] == "Start Practice":
-                            btn.config(state=tk.NORMAL)
-    
-    # Show success message
-    messagebox.showinfo("Practice Session Created", 
-                      f"Created a structured practice session with {len(practice_items)} items!\n\n"
-                      "Click 'Start Practice' to begin your typing session.")
-
-def _create_practice_item(self, text, item_subtype, practice_phase):
-    """Create a practice item with the given text and metadata"""
-    return StudyItem(
-        id=str(uuid.uuid4()),
-        prompt=f"Type this {item_subtype.lower()}:",
-        answer=text,
-        context=f"{practice_phase} - {item_subtype}",
-        item_type=StudyItemType.KEY_CONCEPT,
-        importance=5,
-        mastery=0.0,
-        source_document="Practice Session"
-    )
-
-def _split_into_sentences(self, text):
-    """Split text into sentences for practice"""
-    # Simple sentence splitting - split by period, question mark, or exclamation
-    raw_sentences = re.split(r'(?<=[.!?])\s+', text)
-    
-    # Clean up sentences
-    sentences = []
-    for sentence in raw_sentences:
-        sentence = sentence.strip()
-        if sentence:
-            sentences.append(sentence)
-    
-    return sentences
-
-def _load_study_text(self):
-    """Load text from a file for practice"""
-    file_path = filedialog.askopenfilename(
-        title="Select Text File",
-        filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")]
-    )
-    
-    if not file_path:
-        return
-    
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-            
-        # Insert content into text area
-        self.practice_text.delete("1.0", tk.END)
-        self.practice_text.insert("1.0", content)
+        # Header
+        ttk.Label(main_frame, text="Add Custom Study Items", 
+                font=("Arial", 16, "bold")).pack(anchor=tk.W, pady=10)
         
-        messagebox.showinfo(
-            "File Loaded", 
-            "Study content has been loaded from the file.\n\n"
-            "Click 'Generate Practice Session' to create your structured practice."
-        )
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to load file: {str(e)}")
-
-def _load_from_clipboard(self):
-    """Load text from clipboard for practice"""
-    try:
-        clipboard_text = self.root.clipboard_get()
+        ttk.Label(main_frame, text="Create your own study items for typing practice.", 
+                font=("Arial", 10)).pack(anchor=tk.W, pady=5)
         
-        if not clipboard_text:
-            messagebox.showinfo("Empty Clipboard", "The clipboard is empty.")
-            return
+        # Create notebook for sub-tabs
+        input_notebook = ttk.Notebook(main_frame)
+        input_notebook.pack(fill=tk.BOTH, expand=True, pady=10)
         
-        # Insert clipboard content into text area
-        self.practice_text.delete("1.0", tk.END)
-        self.practice_text.insert("1.0", clipboard_text)
+        # Create sub-tabs
+        single_item_tab = ttk.Frame(input_notebook)
+        bulk_text_tab = ttk.Frame(input_notebook)
+        import_tab = ttk.Frame(input_notebook)
         
-        messagebox.showinfo(
-            "Clipboard Content", 
-            "Study content has been loaded from the clipboard.\n\n"
-            "Click 'Generate Practice Session' to create your structured practice."
-        )
-    except Exception as e:
-        messagebox.showerror("Clipboard Error", f"Failed to get clipboard content: {str(e)}")
-
-def _start_structured_practice(self):
-    """Start a structured practice session"""
-    if not self.study_items:
-        messagebox.showinfo("No Practice Items", 
-                          "Please generate a practice session first.")
-        return
+        input_notebook.add(single_item_tab, text="Single Item")
+        input_notebook.add(bulk_text_tab, text="Bulk Text")
+        input_notebook.add(import_tab, text="Import")
+        
+        # Setup Single Item tab
+        self._setup_single_item_tab(single_item_tab)
+        
+        # Setup Bulk Text tab
+        self._setup_bulk_text_tab(bulk_text_tab)
+        
+        # Setup Import tab
+        self._setup_import_tab(import_tab)
+        
+        # Status bar at the bottom
+        status_frame = ttk.Frame(main_frame)
+        status_frame.pack(fill=tk.X, pady=10)
+        
+        self.item_count_var = tk.StringVar(value="Current items: 0")
+        ttk.Label(status_frame, textvariable=self.item_count_var).pack(side=tk.LEFT)
+        
+        ttk.Button(status_frame, text="Start Studying", 
+                command=self._start_study).pack(side=tk.RIGHT)
+        
+        # Save button
+        ttk.Button(status_frame, text="Save Items", 
+                command=self._save_custom_items).pack(side=tk.RIGHT, padx=5)
     
-    # Initialize the learning tracker for a new session
-    self.learning_tracker.start_session()
-    
-    # Load the first item
-    self._load_next_item()
-    
-    # Switch to study tab
-    self.notebook.select(1)
     def _setup_single_item_tab(self, parent):
         """Setup the single item input tab"""
         # Form for adding individual items
