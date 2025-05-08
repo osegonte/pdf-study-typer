@@ -7,7 +7,6 @@ import threading
 import time
 import uuid  
 
-
 # Add the current directory to Python's path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
@@ -17,7 +16,7 @@ if current_dir not in sys.path:
 try:
     from parser.text_parser import TextParser
     from parser.content_parser import PDFStudyExtractor
-    from parser.study_item import StudyItem, StudyItemCollection
+    from parser.study_item import StudyItem, StudyItemCollection, StudyItemType
     from integration.challenge_generator import ChallengeGenerator, TypingChallenge
     from integration.learning_tracker import LearningTracker
     from integration.study_formatter import StudyFormatter
@@ -66,15 +65,18 @@ class PDFStudyTypingTrainer:
         self.dashboard_tab = ttk.Frame(self.notebook)
         self.study_tab = ttk.Frame(self.notebook)
         self.stats_tab = ttk.Frame(self.notebook)
+        self.text_input_tab = ttk.Frame(self.notebook)  # New tab for manual text input
         
         self.notebook.add(self.dashboard_tab, text="Dashboard")
         self.notebook.add(self.study_tab, text="Study")
         self.notebook.add(self.stats_tab, text="Statistics")
+        self.notebook.add(self.text_input_tab, text="Add Text")  # Add the new tab
         
         # Set up tabs
         self._setup_dashboard()
         self._setup_study_tab()
         self._setup_stats_tab()
+        self._setup_text_input_tab()  # Set up the new tab
     
     def _setup_dashboard(self):
         """Set up the dashboard tab"""
@@ -271,6 +273,712 @@ class PDFStudyTypingTrainer:
         # Export stats button
         ttk.Button(self.stats_tab, text="Export Statistics", 
                    command=self._export_statistics).pack(pady=10)
+    
+    # Here's the implementation for a simplified text input feature focusing on structured practice sessions
+
+def _setup_text_input_tab(self):
+    """Set up a simplified text input tab focused on structured typing practice"""
+    # Main frame
+    main_frame = ttk.Frame(self.text_input_tab)
+    main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+    
+    # Header
+    ttk.Label(main_frame, text="Structured Typing Practice", 
+            font=("Arial", 16, "bold")).pack(anchor=tk.W, pady=10)
+    
+    # Brief description
+    description = (
+        "Enter your study content below, and it will be processed into a structured practice session "
+        "with warm-up, content drills, adaptive challenges, and error-focused practice."
+    )
+    ttk.Label(main_frame, text=description, wraplength=800).pack(anchor=tk.W, pady=5)
+    
+    # Session structure frame
+    structure_frame = ttk.LabelFrame(main_frame, text="Practice Session Structure")
+    structure_frame.pack(fill=tk.X, pady=10)
+    
+    session_structure = (
+        "1. Quick Warm-Up (2-3 min): Loosen up fingers and get into typing mode\n"
+        "2. Targeted Content Drill (8-10 min): Type your study content with moderate pace\n"
+        "3. Adaptive Challenge Cycle (5-7 min): Push comfort zone with increased pace\n"
+        "4. Error-Focus Micro-Session (3-5 min): Practice difficult words/phrases\n"
+        "5. Review & Reflect (2-3 min): See progress and performance statistics\n"
+        "6. Spaced-Repetition Scheduling: Automatically plan future practice"
+    )
+    
+    ttk.Label(structure_frame, text=session_structure, 
+             justify=tk.LEFT, wraplength=800).pack(padx=10, pady=10)
+    
+    # Text input frame
+    input_frame = ttk.LabelFrame(main_frame, text="Enter Your Study Content")
+    input_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+    
+    # Text area for input
+    self.practice_text = tk.Text(input_frame, wrap=tk.WORD, height=15)
+    self.practice_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    
+    # Sample text button
+    def insert_sample():
+        sample_text = (
+            "Quick Warm-Up (2–3 minutes)\n"
+            "* Purpose: Loosen up your fingers, get into \"typing mode.\"\n"
+            "* How: A free-text drill on any neutral filler text—no pressure on accuracy, just get the rhythm and posture right.\n\n"
+            "Targeted Content Drill (8–10 minutes)\n"
+            "* Purpose: Reinforce the actual material you need to learn.\n"
+            "* How: The app breaks content into bite-sized chunks and you type through each one.\n\n"
+            "Adaptive Challenge Cycle (5–7 minutes)\n"
+            "* Purpose: Push your comfort zone without overwhelming you.\n"
+            "* How: Based on your accuracy, the app will raise the pace or repeat missed chunks.\n\n"
+            "Error-Focus Micro-Session (3–5 minutes)\n"
+            "* Purpose: Zero in on the exact words or keystrokes giving you trouble.\n"
+            "* How: Practice rapid-fire on just the items you missed until you master them.\n\n"
+            "Review & Reflect (2–3 minutes)\n"
+            "* Purpose: Let the learning consolidate and give you clear takeaways.\n"
+            "* How: Review your performance statistics and progress over time.\n\n"
+            "Spaced-Repetition Scheduling\n"
+            "* Purpose: Move content out of short-term memory and into long-term recall.\n"
+            "* How: Items are automatically scheduled for future review based on your performance."
+        )
+        self.practice_text.delete("1.0", tk.END)
+        self.practice_text.insert("1.0", sample_text)
+    
+    # Buttons frame
+    buttons_frame = ttk.Frame(main_frame)
+    buttons_frame.pack(fill=tk.X, pady=10)
+    
+    ttk.Button(buttons_frame, text="Insert Sample", 
+              command=insert_sample).pack(side=tk.LEFT, padx=5)
+    
+    ttk.Button(buttons_frame, text="Generate Practice Session", 
+              command=self._generate_practice_session).pack(side=tk.RIGHT, padx=5)
+    
+    ttk.Button(buttons_frame, text="Load from File", 
+              command=self._load_study_text).pack(side=tk.RIGHT, padx=5)
+    
+    ttk.Button(buttons_frame, text="Load from Clipboard", 
+              command=self._load_from_clipboard).pack(side=tk.RIGHT, padx=5)
+    
+    # Status info
+    status_frame = ttk.Frame(main_frame)
+    status_frame.pack(fill=tk.X, pady=10)
+    
+    self.item_count_var = tk.StringVar(value="Items to practice: 0")
+    ttk.Label(status_frame, textvariable=self.item_count_var).pack(side=tk.LEFT)
+    
+    ttk.Button(status_frame, text="Start Practice", 
+              command=self._start_structured_practice, state=tk.DISABLED).pack(side=tk.RIGHT)
+
+def _generate_practice_session(self):
+    """Generate a structured practice session from the input text"""
+    # Get text content
+    content = self.practice_text.get("1.0", tk.END).strip()
+    
+    if not content:
+        messagebox.showwarning("Empty Content", "Please enter some text for practice.")
+        return
+    
+    # Process the content into different practice segments
+    self._process_practice_content(content)
+
+def _process_practice_content(self, content):
+    """Process the content into structured practice items"""
+    # Split content into paragraphs and then into sentences
+    paragraphs = content.split('\n\n')
+    practice_items = []
+    
+    for paragraph in paragraphs:
+        if not paragraph.strip():
+            continue
+            
+        # Process paragraph as a unit for longer content
+        if len(paragraph) > 100:
+            # For long paragraphs, create a paragraph-level item
+            practice_items.append(self._create_practice_item(
+                paragraph, "Paragraph", "Content Drill"
+            ))
+            
+            # Also split into sentences for more focused practice
+            sentences = self._split_into_sentences(paragraph)
+            for sentence in sentences:
+                if len(sentence) > 10:  # Only include meaningful sentences
+                    practice_items.append(self._create_practice_item(
+                        sentence, "Sentence", "Content Drill"
+                    ))
+        else:
+            # For shorter paragraphs, just add as a single item
+            practice_items.append(self._create_practice_item(
+                paragraph, "Short Paragraph", "Content Drill"
+            ))
+    
+    # Create warm-up items (general typing practice)
+    warm_up_text = [
+        "The quick brown fox jumps over the lazy dog.",
+        "Pack my box with five dozen liquor jugs.",
+        "How vexingly quick daft zebras jump!",
+        "Sphinx of black quartz, judge my vow."
+    ]
+    
+    for text in warm_up_text:
+        practice_items.append(self._create_practice_item(
+            text, "Warm-up", "Quick Warm-Up"
+        ))
+    
+    # Add the items to the study collection
+    self.study_items = []
+    
+    for item in practice_items:
+        self.study_items.append(item)
+        
+        # Add to collection
+        if not hasattr(self, 'study_collection') or self.study_collection is None:
+            self.study_collection = StudyItemCollection()
+        self.study_collection.add_item(item)
+    
+    # Update learning tracker and challenge generator
+    if not hasattr(self, 'learning_tracker') or self.learning_tracker is None:
+        self.learning_tracker = LearningTracker()
+    self.learning_tracker.load_study_items(practice_items)
+    
+    if not hasattr(self, 'challenge_generator') or self.challenge_generator is None:
+        self.challenge_generator = ChallengeGenerator(self.study_items)
+    else:
+        self.challenge_generator.add_items(practice_items)
+    
+    # Update item count
+    self.item_count_var.set(f"Items to practice: {len(practice_items)}")
+    
+    # Enable start practice button
+    for widget in self.text_input_tab.winfo_children():
+        if isinstance(widget, ttk.Frame):
+            for child in widget.winfo_children():
+                if isinstance(child, ttk.Frame):
+                    for btn in child.winfo_children():
+                        if isinstance(btn, ttk.Button) and btn["text"] == "Start Practice":
+                            btn.config(state=tk.NORMAL)
+    
+    # Show success message
+    messagebox.showinfo("Practice Session Created", 
+                      f"Created a structured practice session with {len(practice_items)} items!\n\n"
+                      "Click 'Start Practice' to begin your typing session.")
+
+def _create_practice_item(self, text, item_subtype, practice_phase):
+    """Create a practice item with the given text and metadata"""
+    return StudyItem(
+        id=str(uuid.uuid4()),
+        prompt=f"Type this {item_subtype.lower()}:",
+        answer=text,
+        context=f"{practice_phase} - {item_subtype}",
+        item_type=StudyItemType.KEY_CONCEPT,
+        importance=5,
+        mastery=0.0,
+        source_document="Practice Session"
+    )
+
+def _split_into_sentences(self, text):
+    """Split text into sentences for practice"""
+    # Simple sentence splitting - split by period, question mark, or exclamation
+    raw_sentences = re.split(r'(?<=[.!?])\s+', text)
+    
+    # Clean up sentences
+    sentences = []
+    for sentence in raw_sentences:
+        sentence = sentence.strip()
+        if sentence:
+            sentences.append(sentence)
+    
+    return sentences
+
+def _load_study_text(self):
+    """Load text from a file for practice"""
+    file_path = filedialog.askopenfilename(
+        title="Select Text File",
+        filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")]
+    )
+    
+    if not file_path:
+        return
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+            
+        # Insert content into text area
+        self.practice_text.delete("1.0", tk.END)
+        self.practice_text.insert("1.0", content)
+        
+        messagebox.showinfo(
+            "File Loaded", 
+            "Study content has been loaded from the file.\n\n"
+            "Click 'Generate Practice Session' to create your structured practice."
+        )
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to load file: {str(e)}")
+
+def _load_from_clipboard(self):
+    """Load text from clipboard for practice"""
+    try:
+        clipboard_text = self.root.clipboard_get()
+        
+        if not clipboard_text:
+            messagebox.showinfo("Empty Clipboard", "The clipboard is empty.")
+            return
+        
+        # Insert clipboard content into text area
+        self.practice_text.delete("1.0", tk.END)
+        self.practice_text.insert("1.0", clipboard_text)
+        
+        messagebox.showinfo(
+            "Clipboard Content", 
+            "Study content has been loaded from the clipboard.\n\n"
+            "Click 'Generate Practice Session' to create your structured practice."
+        )
+    except Exception as e:
+        messagebox.showerror("Clipboard Error", f"Failed to get clipboard content: {str(e)}")
+
+def _start_structured_practice(self):
+    """Start a structured practice session"""
+    if not self.study_items:
+        messagebox.showinfo("No Practice Items", 
+                          "Please generate a practice session first.")
+        return
+    
+    # Initialize the learning tracker for a new session
+    self.learning_tracker.start_session()
+    
+    # Load the first item
+    self._load_next_item()
+    
+    # Switch to study tab
+    self.notebook.select(1)
+    def _setup_single_item_tab(self, parent):
+        """Setup the single item input tab"""
+        # Form for adding individual items
+        item_frame = ttk.Frame(parent)
+        item_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Item Type
+        type_frame = ttk.Frame(item_frame)
+        type_frame.pack(fill=tk.X, pady=5)
+        ttk.Label(type_frame, text="Item Type:").pack(side=tk.LEFT)
+        
+        self.item_type_var = tk.StringVar(value="key_concept")
+        item_types = [
+            ("Key Concept", "key_concept"),
+            ("Definition", "definition"),
+            ("Fill in Blank", "fill_in_blank"),
+            ("Formula", "formula"),
+            ("List", "list")
+        ]
+        
+        type_select_frame = ttk.Frame(type_frame)
+        type_select_frame.pack(side=tk.LEFT, padx=10)
+        
+        for text, value in item_types:
+            ttk.Radiobutton(type_select_frame, text=text, value=value, 
+                            variable=self.item_type_var).pack(side=tk.LEFT, padx=5)
+        
+        # Context
+        context_frame = ttk.Frame(item_frame)
+        context_frame.pack(fill=tk.X, pady=5)
+        ttk.Label(context_frame, text="Context:").pack(side=tk.LEFT)
+        self.context_entry = ttk.Entry(context_frame, width=40)
+        self.context_entry.pack(side=tk.LEFT, padx=10)
+        self.context_entry.insert(0, "Custom Content")
+        
+        # Importance
+        importance_frame = ttk.Frame(item_frame)
+        importance_frame.pack(fill=tk.X, pady=5)
+        ttk.Label(importance_frame, text="Importance (1-10):").pack(side=tk.LEFT)
+        self.importance_var = tk.IntVar(value=5)
+        importance_scale = ttk.Scale(importance_frame, from_=1, to=10, variable=self.importance_var,
+                                    orient=tk.HORIZONTAL, length=200)
+        importance_scale.pack(side=tk.LEFT, padx=10)
+        # Current value display
+        self.importance_label = ttk.Label(importance_frame, text="5")
+        self.importance_label.pack(side=tk.LEFT)
+        # Update label when scale changes
+        importance_scale.bind("<Motion>", lambda e: self.importance_label.config(
+            text=str(self.importance_var.get())))
+        
+        # Prompt
+        prompt_frame = ttk.LabelFrame(item_frame, text="Prompt (what the user will see)")
+        prompt_frame.pack(fill=tk.X, pady=5)
+        self.prompt_text = tk.Text(prompt_frame, height=3, wrap=tk.WORD)
+        self.prompt_text.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Answer
+        answer_frame = ttk.LabelFrame(item_frame, text="Answer (what the user will type)")
+        answer_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        self.answer_text = tk.Text(answer_frame, height=5, wrap=tk.WORD)
+        self.answer_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Add button
+        ttk.Button(item_frame, text="Add Item", 
+                command=self._add_custom_item).pack(pady=10)
+
+    def _setup_bulk_text_tab(self, parent):
+        """Setup the bulk text input tab"""
+        # Main frame
+        bulk_frame = ttk.Frame(parent)
+        bulk_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Instructions
+        instruction_frame = ttk.LabelFrame(bulk_frame, text="Instructions")
+        instruction_frame.pack(fill=tk.X, pady=5)
+        
+        instructions = (
+            "Enter text in any of these formats:\n\n"
+            "1. Plain text (each line becomes an item)\n"
+            "2. Q&A format (Q: question\nA: answer)\n"
+            "3. Definition list (Term - Definition or Term: Definition)\n"
+            "4. Bullet list (• item or - item or * item)\n"
+            "5. Custom format (prompt|answer|context)"
+        )
+        
+        ttk.Label(instruction_frame, text=instructions, justify=tk.LEFT,
+                wraplength=600).pack(padx=10, pady=10)
+        
+        # Format options
+        format_frame = ttk.Frame(bulk_frame)
+        format_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(format_frame, text="Preferred Format:").pack(side=tk.LEFT)
+        self.format_var = tk.StringVar(value="auto")
+        formats = [
+            ("Auto-detect", "auto"),
+            ("Plain Text", "plain"),
+            ("Q&A", "qa"),
+            ("Definitions", "definition"),
+            ("List", "list"),
+            ("Custom", "custom")
+        ]
+        
+        for text, value in formats:
+            ttk.Radiobutton(format_frame, text=text, value=value, 
+                        variable=self.format_var).pack(side=tk.LEFT, padx=5)
+        
+        # Text input
+        text_frame = ttk.LabelFrame(bulk_frame, text="Enter Your Text")
+        text_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        self.bulk_text = tk.Text(text_frame, wrap=tk.WORD)
+        self.bulk_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Sample text button
+        def insert_sample():
+            sample = (
+                "Q: What is the capital of France?\n"
+                "A: Paris\n\n"
+                "Q: What is the largest planet in our solar system?\n"
+                "A: Jupiter\n\n"
+                "Photosynthesis - The process by which plants convert light energy into chemical energy\n\n"
+                "• Item one in a list\n"
+                "• Item two in a list\n"
+                "• Item three in a list\n\n"
+                "Prompt for custom item|Answer to be typed|Study Context"
+            )
+            self.bulk_text.delete("1.0", tk.END)
+            self.bulk_text.insert("1.0", sample)
+        
+        ttk.Button(bulk_frame, text="Insert Sample Text", 
+                command=insert_sample).pack(side=tk.LEFT, pady=10)
+        
+        # Import button
+        ttk.Button(bulk_frame, text="Import Items", 
+                command=self._import_bulk_items).pack(side=tk.RIGHT, pady=10)
+
+    def _setup_import_tab(self, parent):
+        """Setup the import tab"""
+        # Main frame
+        import_frame = ttk.Frame(parent)
+        import_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # File import section
+        file_frame = ttk.LabelFrame(import_frame, text="Import from File")
+        file_frame.pack(fill=tk.X, pady=10)
+        
+        ttk.Label(file_frame, text="Import study items from a text file. The file can contain:\n"
+                "• Plain text with one item per line\n"
+                "• Q&A format\n"
+                "• Definitions\n"
+                "• Lists\n", 
+                justify=tk.LEFT).pack(padx=10, pady=10)
+        
+        ttk.Button(file_frame, text="Browse for Text File", 
+                command=self._import_text_from_file).pack(padx=10, pady=10)
+        
+        # PDF import section (use existing functionality)
+        pdf_frame = ttk.LabelFrame(import_frame, text="Import from PDF")
+        pdf_frame.pack(fill=tk.X, pady=10)
+        
+        ttk.Label(pdf_frame, text="Import study items from a PDF document using the built-in parser.\n"
+                "The parser will extract definitions, key concepts, formulas, and lists.",
+                justify=tk.LEFT).pack(padx=10, pady=10)
+        
+        ttk.Button(pdf_frame, text="Browse for PDF File", 
+                command=self._open_pdf).pack(padx=10, pady=10)
+        
+        # Clipboard import
+        clipboard_frame = ttk.LabelFrame(import_frame, text="Import from Clipboard")
+        clipboard_frame.pack(fill=tk.X, pady=10)
+        
+        ttk.Label(clipboard_frame, text="Import study items from the clipboard.",
+                justify=tk.LEFT).pack(padx=10, pady=10)
+        
+        ttk.Button(clipboard_frame, text="Paste from Clipboard", 
+                command=self._import_from_clipboard).pack(padx=10, pady=10)
+
+    def _add_custom_item(self):
+        """Add a custom study item from the form"""
+        # Get values from form
+        item_type_str = self.item_type_var.get()
+        item_type = getattr(StudyItemType, item_type_str.upper())
+        
+        context = self.context_entry.get()
+        importance = self.importance_var.get()
+        prompt = self.prompt_text.get("1.0", tk.END).strip()
+        answer = self.answer_text.get("1.0", tk.END).strip()
+        
+        # Validate
+        if not prompt or not answer:
+            messagebox.showwarning("Missing Information", "Please provide both prompt and answer.")
+            return
+        
+        # Create study item
+        item = StudyItem(
+            id=str(uuid.uuid4()),
+            prompt=prompt,
+            answer=answer,
+            context=context,
+            item_type=item_type,
+            importance=importance,
+            mastery=0.0,
+            source_document="Manual Input"
+        )
+        
+        # Add to study items
+        self.study_items.append(item)
+        
+        # Add to collection
+        if not hasattr(self, 'study_collection') or self.study_collection is None:
+            self.study_collection = StudyItemCollection()
+        self.study_collection.add_item(item)
+        
+        # Update learning tracker and challenge generator
+        if not hasattr(self, 'learning_tracker') or self.learning_tracker is None:
+            self.learning_tracker = LearningTracker()
+        self.learning_tracker.load_study_items([item])
+        
+        if not hasattr(self, 'challenge_generator') or self.challenge_generator is None:
+            self.challenge_generator = ChallengeGenerator(self.study_items)
+        else:
+            self.challenge_generator.add_items([item])
+        
+        # Clear form
+        self.prompt_text.delete("1.0", tk.END)
+        self.answer_text.delete("1.0", tk.END)
+        
+        # Update item count
+        self.item_count_var.set(f"Current items: {len(self.study_items)}")
+        
+        # Enable study button if not already enabled
+        self.study_btn.config(state=tk.NORMAL)
+        
+        # Show success message
+        messagebox.showinfo("Item Added", "Study item added successfully!")
+        
+        # Update statistics
+        self._update_statistics()
+
+    def _import_bulk_items(self):
+        """Import multiple items from bulk text input"""
+        bulk_text = self.bulk_text.get("1.0", tk.END).strip()
+        
+        if not bulk_text:
+            messagebox.showwarning("Empty Input", "Please enter some text to import.")
+            return
+        
+        # Get preferred format
+        format_preference = self.format_var.get()
+        
+        # Use TextParser to extract study items
+        parser = TextParser(bulk_text)
+        
+        # If format is specified and not auto-detect, call the specific parser
+        if format_preference == "qa":
+            parser._parse_qa_format()
+        elif format_preference == "definition":
+            parser._parse_definition_list()
+        elif format_preference == "list":
+            parser._parse_bullet_list()
+        elif format_preference == "plain":
+            parser._parse_simple_lines()
+        else:  # auto detect
+            parser.parse()
+        
+        items = parser.get_study_items()
+        
+        if not items:
+            messagebox.showinfo("No Items Found", 
+                            "No study items could be extracted from the text. "
+                            "Try using a different format or add items manually.")
+            return
+        
+        # Add items to study collection
+        for item in items:
+            self.study_items.append(item)
+            
+            if not hasattr(self, 'study_collection') or self.study_collection is None:
+                self.study_collection = StudyItemCollection()
+            self.study_collection.add_item(item)
+        
+        # Update learning tracker and challenge generator
+        if not hasattr(self, 'learning_tracker') or self.learning_tracker is None:
+            self.learning_tracker = LearningTracker()
+        self.learning_tracker.load_study_items(items)
+        
+        if not hasattr(self, 'challenge_generator') or self.challenge_generator is None:
+            self.challenge_generator = ChallengeGenerator(self.study_items)
+        else:
+            self.challenge_generator.add_items(items)
+        
+        # Clear text area
+        self.bulk_text.delete("1.0", tk.END)
+        
+        # Update item count
+        self.item_count_var.set(f"Current items: {len(self.study_items)}")
+        
+        # Enable study button if we have items
+        if self.study_items:
+            self.study_btn.config(state=tk.NORMAL)
+        
+        # Show success message
+        messagebox.showinfo("Items Imported", f"Successfully imported {len(items)} study items!")
+        
+        # Update statistics
+        self._update_statistics()
+
+    def _import_text_from_file(self):
+        """Import study items from a text file using the TextParser"""
+        file_path = filedialog.askopenfilename(
+            title="Select Text File",
+            filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")]
+        )
+        
+        if not file_path:
+            return
+        
+        try:
+            # Use TextParser to extract study items
+            parser = TextParser.from_file(file_path)
+            parser.parse()
+            items = parser.get_study_items()
+            
+            if not items:
+                messagebox.showinfo("No Items Found", 
+                                "No study items could be extracted from the file. "
+                                "Try using a different file or format.")
+                return
+            
+            # Add items to study collection
+            for item in items:
+                self.study_items.append(item)
+                
+                if not hasattr(self, 'study_collection') or self.study_collection is None:
+                    self.study_collection = StudyItemCollection()
+                self.study_collection.add_item(item)
+            
+            # Update learning tracker and challenge generator
+            if not hasattr(self, 'learning_tracker') or self.learning_tracker is None:
+                self.learning_tracker = LearningTracker()
+            self.learning_tracker.load_study_items(items)
+            
+            if not hasattr(self, 'challenge_generator') or self.challenge_generator is None:
+                self.challenge_generator = ChallengeGenerator(self.study_items)
+            else:
+                self.challenge_generator.add_items(items)
+            
+            # Update UI
+            self.pdf_name_var.set(f"Loaded text: {os.path.basename(file_path)}")
+            self.items_count_var.set(f"Study items: {len(self.study_items)}")
+            self.extraction_date_var.set(f"Loaded on: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+            
+            # Update item count in text input tab
+            self.item_count_var.set(f"Current items: {len(self.study_items)}")
+            
+            # Enable study button
+            self.study_btn.config(state=tk.NORMAL)
+            
+            # Show success message
+            messagebox.showinfo("Text Imported", f"Successfully imported {len(items)} study items from the text file!")
+            
+            # Update statistics
+            self._update_statistics()
+        
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to import text file: {str(e)}")
+
+    def _import_from_clipboard(self):
+        """Import text from clipboard"""
+        try:
+            clipboard_text = self.root.clipboard_get()
+            
+            if not clipboard_text:
+                messagebox.showinfo("Empty Clipboard", "The clipboard is empty.")
+                return
+            
+            # Insert clipboard content into bulk text
+            self.bulk_text.delete("1.0", tk.END)
+            self.bulk_text.insert("1.0", clipboard_text)
+            
+            # Switch to bulk text tab
+            for i in range(self.notebook.index("end")):
+                if "Add Text" in self.notebook.tab(i, "text"):
+                    self.notebook.select(i)
+                    break
+            
+            # Focus on the bulk text tab
+            for child in self.text_input_tab.winfo_children():
+                if isinstance(child, ttk.Notebook):
+                    for i in range(child.index("end")):
+                        if "Bulk Text" in child.tab(i, "text"):
+                            child.select(i)
+                            break
+            
+            messagebox.showinfo("Clipboard Content", 
+                            "Clipboard content has been inserted into the bulk text area.\n"
+                            "Click 'Import Items' to process and add the content.")
+        
+        except Exception as e:
+            messagebox.showerror("Clipboard Error", f"Failed to get clipboard content: {str(e)}")
+
+    def _save_custom_items(self):
+        """Save custom study items to a file"""
+        if not self.study_items:
+            messagebox.showinfo("No Items", "No study items to save.")
+            return
+        
+        # Get filename
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            initialdir=self.data_dir,
+            initialfile="custom_study_items.json",
+            filetypes=[("JSON Files", "*.json")]
+        )
+        
+        if not filename:
+            return
+        
+        try:
+            # Save study collection
+            if not hasattr(self, 'study_collection') or self.study_collection is None:
+                self.study_collection = StudyItemCollection()
+                self.study_collection.add_items(self.study_items)
+            
+            self.study_collection.save_to_file(filename)
+            messagebox.showinfo("Success", f"Saved {len(self.study_items)} study items to {filename}!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save items: {str(e)}")
     
     def _open_pdf(self):
         """Open a PDF file for study"""
@@ -768,806 +1476,79 @@ class PDFStudyTypingTrainer:
             except Exception as e:
                 print(f"Error loading previous progress: {str(e)}")
 
-# Add this code to PDFStudyTypingTrainer class in main.py
-
-def _create_ui(self):
-    """Create the application UI"""
-    # Create notebook for tabs
-    self.notebook = ttk.Notebook(self.root)
-    self.notebook.pack(fill=tk.BOTH, expand=True)
-    
-    # Create tabs
-    self.dashboard_tab = ttk.Frame(self.notebook)
-    self.study_tab = ttk.Frame(self.notebook)
-    self.stats_tab = ttk.Frame(self.notebook)
-    self.text_input_tab = ttk.Frame(self.notebook)  # New tab for manual text input
-    
-    self.notebook.add(self.dashboard_tab, text="Dashboard")
-    self.notebook.add(self.study_tab, text="Study")
-    self.notebook.add(self.stats_tab, text="Statistics")
-    self.notebook.add(self.text_input_tab, text="Add Text")  # Add the new tab
-    
-    # Set up tabs
-    self._setup_dashboard()
-    self._setup_study_tab()
-    self._setup_stats_tab()
-    self._setup_text_input_tab()  # Set up the new tab
-
-def _setup_text_input_tab(self):
-    """Set up the manual text input tab"""
-    # Main frame
-    main_frame = ttk.Frame(self.text_input_tab)
-    main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-    
-    # Header
-    ttk.Label(main_frame, text="Add Custom Study Items", 
-              font=("Arial", 16, "bold")).pack(anchor=tk.W, pady=10)
-    
-    ttk.Label(main_frame, text="Create your own study items for typing practice.", 
-              font=("Arial", 10)).pack(anchor=tk.W, pady=5)
-    
-    # Form for adding individual items
-    item_frame = ttk.LabelFrame(main_frame, text="Add Single Item")
-    item_frame.pack(fill=tk.X, pady=10)
-    
-    # Item Type
-    type_frame = ttk.Frame(item_frame)
-    type_frame.pack(fill=tk.X, padx=10, pady=5)
-    ttk.Label(type_frame, text="Item Type:").pack(side=tk.LEFT)
-    
-    self.item_type_var = tk.StringVar(value="key_concept")
-    item_types = [
-        ("Key Concept", "key_concept"),
-        ("Definition", "definition"),
-        ("Fill in Blank", "fill_in_blank"),
-        ("Formula", "formula"),
-        ("List", "list")
-    ]
-    
-    type_select_frame = ttk.Frame(type_frame)
-    type_select_frame.pack(side=tk.LEFT, padx=10)
-    
-    for text, value in item_types:
-        ttk.Radiobutton(type_select_frame, text=text, value=value, 
-                       variable=self.item_type_var).pack(side=tk.LEFT, padx=5)
-    
-    # Context
-    context_frame = ttk.Frame(item_frame)
-    context_frame.pack(fill=tk.X, padx=10, pady=5)
-    ttk.Label(context_frame, text="Context:").pack(side=tk.LEFT)
-    self.context_entry = ttk.Entry(context_frame, width=40)
-    self.context_entry.pack(side=tk.LEFT, padx=10)
-    self.context_entry.insert(0, "Custom Content")
-    
-    # Importance
-    importance_frame = ttk.Frame(item_frame)
-    importance_frame.pack(fill=tk.X, padx=10, pady=5)
-    ttk.Label(importance_frame, text="Importance (1-10):").pack(side=tk.LEFT)
-    self.importance_var = tk.IntVar(value=5)
-    importance_scale = ttk.Scale(importance_frame, from_=1, to=10, variable=self.importance_var,
-                               orient=tk.HORIZONTAL, length=200)
-    importance_scale.pack(side=tk.LEFT, padx=10)
-    # Current value display
-    self.importance_label = ttk.Label(importance_frame, text="5")
-    self.importance_label.pack(side=tk.LEFT)
-    # Update label when scale changes
-    importance_scale.bind("<Motion>", lambda e: self.importance_label.config(
-        text=str(self.importance_var.get())))
-    
-    # Prompt
-    prompt_frame = ttk.LabelFrame(item_frame, text="Prompt (what the user will see)")
-    prompt_frame.pack(fill=tk.X, padx=10, pady=5)
-    self.prompt_text = tk.Text(prompt_frame, height=3, wrap=tk.WORD)
-    self.prompt_text.pack(fill=tk.X, padx=5, pady=5)
-    
-    # Answer
-    answer_frame = ttk.LabelFrame(item_frame, text="Answer (what the user will type)")
-    answer_frame.pack(fill=tk.X, padx=10, pady=5)
-    self.answer_text = tk.Text(answer_frame, height=5, wrap=tk.WORD)
-    self.answer_text.pack(fill=tk.X, padx=5, pady=5)
-    
-    # Add button
-    ttk.Button(item_frame, text="Add Item", 
-              command=self._add_custom_item).pack(pady=10)
-    
-    # Separator
-    ttk.Separator(main_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
-    
-    # Form for bulk import
-    bulk_frame = ttk.LabelFrame(main_frame, text="Bulk Import")
-    bulk_frame.pack(fill=tk.X, pady=10)
-    
-    ttk.Label(bulk_frame, text="Enter multiple items, one per line in format: prompt|answer|context", 
-             wraplength=600).pack(anchor=tk.W, padx=10, pady=5)
-    
-    self.bulk_text = tk.Text(bulk_frame, height=10, wrap=tk.WORD)
-    self.bulk_text.pack(fill=tk.X, padx=10, pady=5)
-    
-    bulk_buttons_frame = ttk.Frame(bulk_frame)
-    bulk_buttons_frame.pack(fill=tk.X, padx=10, pady=5)
-    
-    ttk.Button(bulk_buttons_frame, text="Import Items", 
-              command=self._import_bulk_items).pack(side=tk.LEFT, padx=5)
-    
-    ttk.Button(bulk_buttons_frame, text="Load from Text File", 
-              command=self._load_from_text_file).pack(side=tk.LEFT, padx=5)
-    
-    # Status info
-    status_frame = ttk.Frame(main_frame)
-    status_frame.pack(fill=tk.X, pady=10)
-    
-    self.item_count_var = tk.StringVar(value="Current items: 0")
-    ttk.Label(status_frame, textvariable=self.item_count_var).pack(side=tk.LEFT)
-    
-    ttk.Button(status_frame, text="Start Studying", 
-              command=self._start_study).pack(side=tk.RIGHT)
-
-def _add_custom_item(self):
-    """Add a custom study item from the form"""
-    # Get values from form
-    item_type_str = self.item_type_var.get()
-    item_type = getattr(StudyItemType, item_type_str.upper())
-    
-    context = self.context_entry.get()
-    importance = self.importance_var.get()
-    prompt = self.prompt_text.get("1.0", tk.END).strip()
-    answer = self.answer_text.get("1.0", tk.END).strip()
-    
-    # Validate
-    if not prompt or not answer:
-        messagebox.showwarning("Missing Information", "Please provide both prompt and answer.")
-        return
-    
-    # Create study item
-    item = StudyItem(
-        id=str(uuid.uuid4()),
-        prompt=prompt,
-        answer=answer,
-        context=context,
-        item_type=item_type,
-        importance=importance,
-        mastery=0.0,
-        source_document="Manual Input"
-    )
-    
-    # Add to study items
-    self.study_items.append(item)
-    
-    # Add to collection
-    if not hasattr(self, 'study_collection') or self.study_collection is None:
-        self.study_collection = StudyItemCollection()
-    self.study_collection.add_item(item)
-    
-    # Update learning tracker and challenge generator
-    if not hasattr(self, 'learning_tracker') or self.learning_tracker is None:
-        self.learning_tracker = LearningTracker()
-    self.learning_tracker.load_study_items([item])
-    
-    if not hasattr(self, 'challenge_generator') or self.challenge_generator is None:
-        self.challenge_generator = ChallengeGenerator(self.study_items)
-    else:
-        self.challenge_generator.add_items([item])
-    
-    # Clear form
-    self.prompt_text.delete("1.0", tk.END)
-    self.answer_text.delete("1.0", tk.END)
-    
-    # Update item count
-    self.item_count_var.set(f"Current items: {len(self.study_items)}")
-    
-    # Enable study button if not already enabled
-    self.study_btn.config(state=tk.NORMAL)
-    
-    # Show success message
-    messagebox.showinfo("Item Added", "Study item added successfully!")
-    
-    # Update statistics
-    self._update_statistics()
-
-def _import_bulk_items(self):
-    """Import multiple items from bulk text input"""
-    bulk_text = self.bulk_text.get("1.0", tk.END).strip()
-    
-    if not bulk_text:
-        messagebox.showwarning("Empty Input", "Please enter some text to import.")
-        return
-    
-    # Split into lines
-    lines = bulk_text.split('\n')
-    items_added = 0
-    
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
+    def _parse_text_input(self, text):
+        """Parse various text input formats to create study items
         
-        # Parse line (format: prompt|answer|context)
-        parts = line.split('|')
+        Supported formats:
+        1. Q&A format: "Q: question\nA: answer"
+        2. Pipe-delimited: "prompt|answer|context"
+        3. Simple text: Each line becomes an item to type
+        """
+        items = []
         
-        # Default values
-        prompt = "Type this:"
-        answer = line
-        context = "Custom Content"
-        
-        # Parse according to number of parts
-        if len(parts) >= 3:
-            prompt, answer, context = parts[0], parts[1], parts[2]
-        elif len(parts) == 2:
-            prompt, answer = parts[0], parts[1]
-        
-        # Create study item
-        item_type_str = self.item_type_var.get()
-        item_type = getattr(StudyItemType, item_type_str.upper())
-        
-        item = StudyItem(
-            id=str(uuid.uuid4()),
-            prompt=prompt,
-            answer=answer,
-            context=context,
-            item_type=item_type,
-            importance=self.importance_var.get(),
-            mastery=0.0,
-            source_document="Bulk Import"
-        )
-        
-        # Add to study items
-        self.study_items.append(item)
-        
-        # Add to collection
-        if not hasattr(self, 'study_collection') or self.study_collection is None:
-            self.study_collection = StudyItemCollection()
-        self.study_collection.add_item(item)
-        
-        items_added += 1
-    
-    # Update learning tracker and challenge generator
-    if items_added > 0:
-        if not hasattr(self, 'learning_tracker') or self.learning_tracker is None:
-            self.learning_tracker = LearningTracker()
-        self.learning_tracker.load_study_items(self.study_items)
-        
-        if not hasattr(self, 'challenge_generator') or self.challenge_generator is None:
-            self.challenge_generator = ChallengeGenerator(self.study_items)
+        # Check if it's Q&A format
+        if "Q:" in text and "A:" in text:
+            # Split by Q: to get individual QA pairs
+            qa_pairs = text.split("Q:")
+            for pair in qa_pairs:
+                if not pair.strip():
+                    continue
+                    
+                # Find answer part
+                if "A:" in pair:
+                    question_part, answer_part = pair.split("A:", 1)
+                    prompt = f"Q: {question_part.strip()}"
+                    answer = answer_part.strip()
+                    
+                    item = StudyItem(
+                        id=str(uuid.uuid4()),
+                        prompt=prompt,
+                        answer=answer,
+                        context="Q&A",
+                        item_type=StudyItemType.KEY_CONCEPT,
+                        importance=self.importance_var.get(),
+                        mastery=0.0,
+                        source_document="Text Input"
+                    )
+                    items.append(item)
         else:
-            self.challenge_generator.add_items(self.study_items)
-    
-    # Clear text area
-    self.bulk_text.delete("1.0", tk.END)
-    
-    # Update item count
-    self.item_count_var.set(f"Current items: {len(self.study_items)}")
-    
-    # Enable study button if we have items
-    if self.study_items:
-        self.study_btn.config(state=tk.NORMAL)
-    
-    # Show success message
-    messagebox.showinfo("Items Imported", f"Successfully imported {items_added} study items!")
-    
-    # Update statistics
-    self._update_statistics()
-
-def _load_from_text_file(self):
-    """Load study items from a text file"""
-    file_path = filedialog.askopenfilename(
-        title="Select Text File",
-        filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")]
-    )
-    
-    if not file_path:
-        return
-    
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-            
-        # Insert content into bulk text area
-        self.bulk_text.delete("1.0", tk.END)
-        self.bulk_text.insert("1.0", content)
-        
-        # Show instructions
-        messagebox.showinfo(
-            "File Loaded", 
-            "File content has been loaded into the bulk import area.\n\n"
-            "Each line will be imported as a separate study item.\n"
-            "You can edit the content before importing."
-        )
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to load file: {str(e)}")
-
-# Also add this utility method to parse different text input formats
-def _parse_text_input(self, text):
-    """Parse various text input formats to create study items
-    
-    Supported formats:
-    1. Q&A format: "Q: question\nA: answer"
-    2. Pipe-delimited: "prompt|answer|context"
-    3. Simple text: Each line becomes an item to type
-    """
-    items = []
-    
-    # Check if it's Q&A format
-    if "Q:" in text and "A:" in text:
-        # Split by Q: to get individual QA pairs
-        qa_pairs = text.split("Q:")
-        for pair in qa_pairs:
-            if not pair.strip():
-                continue
-                
-            # Find answer part
-            if "A:" in pair:
-                question_part, answer_part = pair.split("A:", 1)
-                prompt = f"Q: {question_part.strip()}"
-                answer = answer_part.strip()
-                
+            # Process as simple lines or pipe-delimited
+            lines = text.strip().split('\n')
+            for line in lines:
+                if not line.strip():
+                    continue
+                    
+                if '|' in line:
+                    # Pipe-delimited format
+                    parts = line.split('|')
+                    if len(parts) >= 3:
+                        prompt, answer, context = parts[0], parts[1], parts[2]
+                    elif len(parts) == 2:
+                        prompt, answer = parts[0], parts[1]
+                        context = "Custom Content"
+                    else:
+                        prompt = "Type this:"
+                        answer = line
+                        context = "Custom Content"
+                else:
+                    # Simple line format
+                    prompt = "Type this:"
+                    answer = line
+                    context = "Custom Content"
+                    
                 item = StudyItem(
                     id=str(uuid.uuid4()),
                     prompt=prompt,
                     answer=answer,
-                    context="Q&A",
+                    context=context,
                     item_type=StudyItemType.KEY_CONCEPT,
                     importance=self.importance_var.get(),
                     mastery=0.0,
                     source_document="Text Input"
                 )
                 items.append(item)
-    else:
-        # Process as simple lines or pipe-delimited
-        lines = text.strip().split('\n')
-        for line in lines:
-            if not line.strip():
-                continue
-                
-            if '|' in line:
-                # Pipe-delimited format
-                parts = line.split('|')
-                if len(parts) >= 3:
-                    prompt, answer, context = parts[0], parts[1], parts[2]
-                elif len(parts) == 2:
-                    prompt, answer = parts[0], parts[1]
-                    context = "Custom Content"
-                else:
-                    prompt = "Type this:"
-                    answer = line
-                    context = "Custom Content"
-            else:
-                # Simple line format
-                prompt = "Type this:"
-                answer = line
-                context = "Custom Content"
-                
-            item = StudyItem(
-                id=str(uuid.uuid4()),
-                prompt=prompt,
-                answer=answer,
-                context=context,
-                item_type=StudyItemType.KEY_CONCEPT,
-                importance=self.importance_var.get(),
-                mastery=0.0,
-                source_document="Text Input"
-            )
-            items.append(item)
-    
-    return items        
-def _setup_text_input_tab(self):
-    """Set up the manual text input tab with improved parsing options"""
-    # Main frame
-    main_frame = ttk.Frame(self.text_input_tab)
-    main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-    
-    # Header
-    ttk.Label(main_frame, text="Add Custom Study Items", 
-              font=("Arial", 16, "bold")).pack(anchor=tk.W, pady=10)
-    
-    ttk.Label(main_frame, text="Create your own study items for typing practice.", 
-              font=("Arial", 10)).pack(anchor=tk.W, pady=5)
-    
-    # Create notebook for sub-tabs
-    input_notebook = ttk.Notebook(main_frame)
-    input_notebook.pack(fill=tk.BOTH, expand=True, pady=10)
-    
-    # Create sub-tabs
-    single_item_tab = ttk.Frame(input_notebook)
-    bulk_text_tab = ttk.Frame(input_notebook)
-    import_tab = ttk.Frame(input_notebook)
-    
-    input_notebook.add(single_item_tab, text="Single Item")
-    input_notebook.add(bulk_text_tab, text="Bulk Text")
-    input_notebook.add(import_tab, text="Import")
-    
-    # Setup Single Item tab
-    self._setup_single_item_tab(single_item_tab)
-    
-    # Setup Bulk Text tab
-    self._setup_bulk_text_tab(bulk_text_tab)
-    
-    # Setup Import tab
-    self._setup_import_tab(import_tab)
-    
-    # Status bar at the bottom
-    status_frame = ttk.Frame(main_frame)
-    status_frame.pack(fill=tk.X, pady=10)
-    
-    self.item_count_var = tk.StringVar(value="Current items: 0")
-    ttk.Label(status_frame, textvariable=self.item_count_var).pack(side=tk.LEFT)
-    
-    ttk.Button(status_frame, text="Start Studying", 
-               command=self._start_study).pack(side=tk.RIGHT)
-    
-    # Save button
-    ttk.Button(status_frame, text="Save Items", 
-               command=self._save_custom_items).pack(side=tk.RIGHT, padx=5)
-
-def _setup_single_item_tab(self, parent):
-    """Setup the single item input tab"""
-    # Form for adding individual items
-    item_frame = ttk.Frame(parent)
-    item_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-    
-    # Item Type
-    type_frame = ttk.Frame(item_frame)
-    type_frame.pack(fill=tk.X, pady=5)
-    ttk.Label(type_frame, text="Item Type:").pack(side=tk.LEFT)
-    
-    self.item_type_var = tk.StringVar(value="key_concept")
-    item_types = [
-        ("Key Concept", "key_concept"),
-        ("Definition", "definition"),
-        ("Fill in Blank", "fill_in_blank"),
-        ("Formula", "formula"),
-        ("List", "list")
-    ]
-    
-    type_select_frame = ttk.Frame(type_frame)
-    type_select_frame.pack(side=tk.LEFT, padx=10)
-    
-    for text, value in item_types:
-        ttk.Radiobutton(type_select_frame, text=text, value=value, 
-                        variable=self.item_type_var).pack(side=tk.LEFT, padx=5)
-    
-    # Context
-    context_frame = ttk.Frame(item_frame)
-    context_frame.pack(fill=tk.X, pady=5)
-    ttk.Label(context_frame, text="Context:").pack(side=tk.LEFT)
-    self.context_entry = ttk.Entry(context_frame, width=40)
-    self.context_entry.pack(side=tk.LEFT, padx=10)
-    self.context_entry.insert(0, "Custom Content")
-    
-    # Importance
-    importance_frame = ttk.Frame(item_frame)
-    importance_frame.pack(fill=tk.X, pady=5)
-    ttk.Label(importance_frame, text="Importance (1-10):").pack(side=tk.LEFT)
-    self.importance_var = tk.IntVar(value=5)
-    importance_scale = ttk.Scale(importance_frame, from_=1, to=10, variable=self.importance_var,
-                                 orient=tk.HORIZONTAL, length=200)
-    importance_scale.pack(side=tk.LEFT, padx=10)
-    # Current value display
-    self.importance_label = ttk.Label(importance_frame, text="5")
-    self.importance_label.pack(side=tk.LEFT)
-    # Update label when scale changes
-    importance_scale.bind("<Motion>", lambda e: self.importance_label.config(
-        text=str(self.importance_var.get())))
-    
-    # Prompt
-    prompt_frame = ttk.LabelFrame(item_frame, text="Prompt (what the user will see)")
-    prompt_frame.pack(fill=tk.X, pady=5)
-    self.prompt_text = tk.Text(prompt_frame, height=3, wrap=tk.WORD)
-    self.prompt_text.pack(fill=tk.X, padx=5, pady=5)
-    
-    # Answer
-    answer_frame = ttk.LabelFrame(item_frame, text="Answer (what the user will type)")
-    answer_frame.pack(fill=tk.BOTH, expand=True, pady=5)
-    self.answer_text = tk.Text(answer_frame, height=5, wrap=tk.WORD)
-    self.answer_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-    
-    # Add button
-    ttk.Button(item_frame, text="Add Item", 
-              command=self._add_custom_item).pack(pady=10)
-
-def _setup_bulk_text_tab(self, parent):
-    """Setup the bulk text input tab"""
-    # Main frame
-    bulk_frame = ttk.Frame(parent)
-    bulk_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-    
-    # Instructions
-    instruction_frame = ttk.LabelFrame(bulk_frame, text="Instructions")
-    instruction_frame.pack(fill=tk.X, pady=5)
-    
-    instructions = (
-        "Enter text in any of these formats:\n\n"
-        "1. Plain text (each line becomes an item)\n"
-        "2. Q&A format (Q: question\nA: answer)\n"
-        "3. Definition list (Term - Definition or Term: Definition)\n"
-        "4. Bullet list (• item or - item or * item)\n"
-        "5. Custom format (prompt|answer|context)"
-    )
-    
-    ttk.Label(instruction_frame, text=instructions, justify=tk.LEFT,
-             wraplength=600).pack(padx=10, pady=10)
-    
-    # Format options
-    format_frame = ttk.Frame(bulk_frame)
-    format_frame.pack(fill=tk.X, pady=5)
-    
-    ttk.Label(format_frame, text="Preferred Format:").pack(side=tk.LEFT)
-    self.format_var = tk.StringVar(value="auto")
-    formats = [
-        ("Auto-detect", "auto"),
-        ("Plain Text", "plain"),
-        ("Q&A", "qa"),
-        ("Definitions", "definition"),
-        ("List", "list"),
-        ("Custom", "custom")
-    ]
-    
-    for text, value in formats:
-        ttk.Radiobutton(format_frame, text=text, value=value, 
-                       variable=self.format_var).pack(side=tk.LEFT, padx=5)
-    
-    # Text input
-    text_frame = ttk.LabelFrame(bulk_frame, text="Enter Your Text")
-    text_frame.pack(fill=tk.BOTH, expand=True, pady=5)
-    
-    self.bulk_text = tk.Text(text_frame, wrap=tk.WORD)
-    self.bulk_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-    
-    # Sample text button
-    def insert_sample():
-        sample = (
-            "Q: What is the capital of France?\n"
-            "A: Paris\n\n"
-            "Q: What is the largest planet in our solar system?\n"
-            "A: Jupiter\n\n"
-            "Photosynthesis - The process by which plants convert light energy into chemical energy\n\n"
-            "• Item one in a list\n"
-            "• Item two in a list\n"
-            "• Item three in a list\n\n"
-            "Prompt for custom item|Answer to be typed|Study Context"
-        )
-        self.bulk_text.delete("1.0", tk.END)
-        self.bulk_text.insert("1.0", sample)
-    
-    ttk.Button(bulk_frame, text="Insert Sample Text", 
-               command=insert_sample).pack(side=tk.LEFT, pady=10)
-    
-    # Import button
-    ttk.Button(bulk_frame, text="Import Items", 
-               command=self._import_bulk_items).pack(side=tk.RIGHT, pady=10)
-
-def _setup_import_tab(self, parent):
-    """Setup the import tab"""
-    # Main frame
-    import_frame = ttk.Frame(parent)
-    import_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-    
-    # File import section
-    file_frame = ttk.LabelFrame(import_frame, text="Import from File")
-    file_frame.pack(fill=tk.X, pady=10)
-    
-    ttk.Label(file_frame, text="Import study items from a text file. The file can contain:\n"
-             "• Plain text with one item per line\n"
-             "• Q&A format\n"
-             "• Definitions\n"
-             "• Lists\n", 
-             justify=tk.LEFT).pack(padx=10, pady=10)
-    
-    ttk.Button(file_frame, text="Browse for Text File", 
-               command=self._import_text_from_file).pack(padx=10, pady=10)
-    
-    # PDF import section (use existing functionality)
-    pdf_frame = ttk.LabelFrame(import_frame, text="Import from PDF")
-    pdf_frame.pack(fill=tk.X, pady=10)
-    
-    ttk.Label(pdf_frame, text="Import study items from a PDF document using the built-in parser.\n"
-             "The parser will extract definitions, key concepts, formulas, and lists.",
-             justify=tk.LEFT).pack(padx=10, pady=10)
-    
-    ttk.Button(pdf_frame, text="Browse for PDF File", 
-               command=self._open_pdf).pack(padx=10, pady=10)
-    
-    # Clipboard import
-    clipboard_frame = ttk.LabelFrame(import_frame, text="Import from Clipboard")
-    clipboard_frame.pack(fill=tk.X, pady=10)
-    
-    ttk.Label(clipboard_frame, text="Import study items from the clipboard.",
-             justify=tk.LEFT).pack(padx=10, pady=10)
-    
-    ttk.Button(clipboard_frame, text="Paste from Clipboard", 
-               command=self._import_from_clipboard).pack(padx=10, pady=10)
-
-def _add_custom_item(self):
-    """Add a custom study item from the form"""
-    # Get values from form
-    item_type_str = self.item_type_var.get()
-    item_type = getattr(StudyItemType, item_type_str.upper())
-    
-    context = self.context_entry.get()
-    importance = self.importance_var.get()
-    prompt = self.prompt_text.get("1.0", tk.END).strip()
-    answer = self.answer_text.get("1.0", tk.END).strip()
-    
-    # Validate
-    if not prompt or not answer:
-        messagebox.showwarning("Missing Information", "Please provide both prompt and answer.")
-        return
-    
-    # Create study item
-    item = StudyItem(
-        id=str(uuid.uuid4()),
-        prompt=prompt,
-        answer=answer,
-        context=context,
-        item_type=item_type,
-        importance=importance,
-        mastery=0.0,
-        source_document="Manual Input"
-    )
-    
-    # Add to study items
-    self.study_items.append(item)
-    
-    # Add to collection
-    if not hasattr(self, 'study_collection') or self.study_collection is None:
-        self.study_collection = StudyItemCollection()
-    self.study_collection.add_item(item)
-    
-    # Update learning tracker and challenge generator
-    if not hasattr(self, 'learning_tracker') or self.learning_tracker is None:
-        self.learning_tracker = LearningTracker()
-    self.learning_tracker.load_study_items([item])
-    
-    if not hasattr(self, 'challenge_generator') or self.challenge_generator is None:
-        self.challenge_generator = ChallengeGenerator(self.study_items)
-    else:
-        self.challenge_generator.add_items([item])
-    
-    # Clear form
-    self.prompt_text.delete("1.0", tk.END)
-    self.answer_text.delete("1.0", tk.END)
-    
-    # Update item count
-    self.item_count_var.set(f"Current items: {len(self.study_items)}")
-    
-    # Enable study button if not already enabled
-    self.study_btn.config(state=tk.NORMAL)
-    
-    # Show success message
-    messagebox.showinfo("Item Added", "Study item added successfully!")
-    
-    # Update statistics
-    self._update_statistics()
-
-def _import_bulk_items(self):
-    """Import multiple items from bulk text input"""
-    bulk_text = self.bulk_text.get("1.0", tk.END).strip()
-    
-    if not bulk_text:
-        messagebox.showwarning("Empty Input", "Please enter some text to import.")
-        return
-    
-    # Get preferred format
-    format_preference = self.format_var.get()
-    
-    # Use TextParser to extract study items
-    from parser.text_parser import TextParser
-    parser = TextParser(bulk_text)
-    
-    # If format is specified and not auto-detect, call the specific parser
-    if format_preference == "qa":
-        parser._parse_qa_format()
-    elif format_preference == "definition":
-        parser._parse_definition_list()
-    elif format_preference == "list":
-        parser._parse_bullet_list()
-    elif format_preference == "plain":
-        parser._parse_simple_lines()
-    else:  # auto detect
-        parser.parse()
-    
-    items = parser.get_study_items()
-    
-    if not items:
-        messagebox.showinfo("No Items Found", 
-                         "No study items could be extracted from the text. "
-                         "Try using a different format or add items manually.")
-        return
-    
-    # Add items to study collection
-    for item in items:
-        self.study_items.append(item)
         
-        if not hasattr(self, 'study_collection') or self.study_collection is None:
-            self.study_collection = StudyItemCollection()
-        self.study_collection.add_item(item)
-    
-    # Update learning tracker and challenge generator
-    if not hasattr(self, 'learning_tracker') or self.learning_tracker is None:
-        self.learning_tracker = LearningTracker()
-    self.learning_tracker.load_study_items(items)
-    
-    if not hasattr(self, 'challenge_generator') or self.challenge_generator is None:
-        self.challenge_generator = ChallengeGenerator(self.study_items)
-    else:
-        self.challenge_generator.add_items(items)
-    
-    # Clear text area
-    self.bulk_text.delete("1.0", tk.END)
-    
-    # Update item count
-    self.item_count_var.set(f"Current items: {len(self.study_items)}")
-    
-    # Enable study button if we have items
-    if self.study_items:
-        self.study_btn.config(state=tk.NORMAL)
-    
-    # Show success message
-    messagebox.showinfo("Items Imported", f"Successfully imported {len(items)} study items!")
-    
-    # Update statistics
-    self._update_statistics()
-
-def _import_from_clipboard(self):
-    """Import text from clipboard"""
-    try:
-        clipboard_text = self.root.clipboard_get()
-        
-        if not clipboard_text:
-            messagebox.showinfo("Empty Clipboard", "The clipboard is empty.")
-            return
-        
-        # Insert clipboard content into bulk text
-        self.bulk_text.delete("1.0", tk.END)
-        self.bulk_text.insert("1.0", clipboard_text)
-        
-        # Switch to bulk text tab
-        for i in range(self.notebook.index("end")):
-            if "Add Text" in self.notebook.tab(i, "text"):
-                self.notebook.select(i)
-                break
-        
-        # Focus on the bulk text tab
-        for child in self.text_input_tab.winfo_children():
-            if isinstance(child, ttk.Notebook):
-                for i in range(child.index("end")):
-                    if "Bulk Text" in child.tab(i, "text"):
-                        child.select(i)
-                        break
-        
-        messagebox.showinfo("Clipboard Content", 
-                         "Clipboard content has been inserted into the bulk text area.\n"
-                         "Click 'Import Items' to process and add the content.")
-    
-    except Exception as e:
-        messagebox.showerror("Clipboard Error", f"Failed to get clipboard content: {str(e)}")
-
-def _save_custom_items(self):
-    """Save custom study items to a file"""
-    if not self.study_items:
-        messagebox.showinfo("No Items", "No study items to save.")
-        return
-    
-    # Get filename
-    filename = filedialog.asksaveasfilename(
-        defaultextension=".json",
-        initialdir=self.data_dir,
-        initialfile="custom_study_items.json",
-        filetypes=[("JSON Files", "*.json")]
-    )
-    
-    if not filename:
-        return
-    
-    try:
-        # Save study collection
-        if not hasattr(self, 'study_collection') or self.study_collection is None:
-            self.study_collection = StudyItemCollection()
-            self.study_collection.add_items(self.study_items)
-        
-        self.study_collection.save_to_file(filename)
-        messagebox.showinfo("Success", f"Saved {len(self.study_items)} study items to {filename}!")
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to save items: {str(e)}")        
+        return items
 
 
 def main():
