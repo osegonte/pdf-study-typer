@@ -7,7 +7,7 @@ import threading
 import time
 import uuid  
 from integration.sequential_practice_ui import SequentialPracticeUI
-
+from direct_practice_module import DirectPracticeModule
 # Add the current directory to Python's path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
@@ -61,23 +61,44 @@ class PDFStudyTypingTrainer:
         # Create notebook for tabs
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill=tk.BOTH, expand=True)
-        
         # Create tabs
+        self.home_tab = ttk.Frame(self.notebook)  # Add this line
         self.dashboard_tab = ttk.Frame(self.notebook)
         self.study_tab = ttk.Frame(self.notebook)
         self.stats_tab = ttk.Frame(self.notebook)
-        self.text_input_tab = ttk.Frame(self.notebook)  # New tab for manual text input
-        
+        self.text_input_tab = ttk.Frame(self.notebook)
+        # Add home tab first, then other tabs
+        self.notebook.add(self.home_tab, text="Home")  # Add this line
         self.notebook.add(self.dashboard_tab, text="Dashboard")
         self.notebook.add(self.study_tab, text="Study")
         self.notebook.add(self.stats_tab, text="Statistics")
-        self.notebook.add(self.text_input_tab, text="Add Text")  # Add the new tab
-        
+        self.notebook.add(self.text_input_tab, text="Add Text")
         # Set up tabs
+        self._setup_home_tab()  # Add this line 
         self._setup_dashboard()
         self._setup_study_tab()
         self._setup_stats_tab()
-        self._setup_text_input_tab()  # Set up the new tab
+        self._setup_text_input_tab()
+        self._setup_sequential_practice()
+
+    def _setup_home_tab(self):
+        """Set up the new home tab with direct practice module"""
+        # Create and initialize the direct practice module
+        self.direct_practice = DirectPracticeModule(self.home_tab, self)
+            
+        # Add description text at the bottom
+        bottom_frame = ttk.Frame(self.home_tab)
+        bottom_frame.pack(fill=tk.X, side=tk.BOTTOM, padx=20, pady=10)
+
+        # Add feature steps from the requirements
+        step_text = (
+            "An optimal typing‐study session with this app would blend focused content review, "
+            "deliberate practice on weak spots, real‐time feedback, and built-in spacing to maximize "
+            "both retention of the material and your raw speed."
+        )
+        ttk.Label(bottom_frame, text=step_text, wraplength=800, justify=tk.LEFT).pack(pady=10)
+    
+
     
     def _setup_sequential_practice(self):
         """Set up the sequential practice tab"""
