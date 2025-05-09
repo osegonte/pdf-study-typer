@@ -6,6 +6,7 @@ from datetime import datetime
 import threading
 import time
 import uuid  
+from integration.sequential_practice_ui import SequentialPracticeUI
 
 # Add the current directory to Python's path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -78,8 +79,15 @@ class PDFStudyTypingTrainer:
         self._setup_stats_tab()
         self._setup_text_input_tab()  # Set up the new tab
     
+    def _setup_sequential_practice(self):
+        """Set up the sequential practice tab"""
+        self.sequential_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.sequential_tab, text="Sequential Practice")
+        self.sequential_practice_ui = SequentialPracticeUI(self.sequential_tab, self)
+    
     def _setup_dashboard(self):
         """Set up the dashboard tab"""
+        self.sequential_tab = ttk.Frame(self.notebook)
         # Header
         header_frame = ttk.Frame(self.dashboard_tab)
         header_frame.pack(fill=tk.X, padx=20, pady=10)
@@ -1347,3 +1355,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
