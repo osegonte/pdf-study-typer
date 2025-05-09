@@ -1,0 +1,403 @@
+/* styling_tokens.css
+ * CSS variables defining the design system tokens for the PDF Study Typing Trainer
+ * Based on the typing_study_design_guide.py specifications
+ */
+
+:root {
+  /* Typography */
+  --font-base: 'Inter', 'Helvetica', 'Arial', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --font-disfluency: 'JetBrains Mono', 'Courier New', monospace;
+  
+  /* Font Weights */
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  
+  /* Font Sizes */
+  --size-body: 16px;
+  --size-input: 18px;
+  --size-h1: 32px;
+  --size-h2: 24px;
+  
+  /* Line Heights */
+  --line-height-body: 24px;
+  --line-height-input: 28px;
+  --line-height-h1: 40px;
+  --line-height-h2: 32px;
+  
+  /* Letter Spacing */
+  --letter-spacing-body: 0.5px;
+  --letter-spacing-input: 0.75px;
+  
+  /* Light Theme Colors */
+  --light-background: #FFFFFF;
+  --light-surface: #F5F5F5;
+  --light-primary: #0A84FF;
+  --light-secondary: #5E5CE6;
+  --light-text-primary: #1C1C1E;
+  --light-text-secondary: #3A3A3C;
+  
+  /* Dark Theme Colors */
+  --dark-background: #1C1C1E;
+  --dark-surface: #2C2C2E;
+  --dark-primary: #0A84FF;
+  --dark-secondary: #64D2FF;
+  --dark-text-primary: #FFFFFF;
+  --dark-text-secondary: #EBEBF5;
+  
+  /* Eye-Care Theme Colors */
+  --eye-care-background: #FFF3E0;
+  --eye-care-surface: #FFF8E1;
+  --eye-care-primary: #FB8C00;
+  --eye-care-text-primary: #4E342E;
+  
+  /* Spacing Units */
+  --spacing-unit: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  
+  /* Focus State */
+  --focus-outline: 4px auto var(--color-primary);
+  
+  /* Default to Light Theme */
+  --color-background: var(--light-background);
+  --color-surface: var(--light-surface);
+  --color-primary: var(--light-primary);
+  --color-secondary: var(--light-secondary);
+  --color-text-primary: var(--light-text-primary);
+  --color-text-secondary: var(--light-text-secondary);
+  
+  /* Accessibility */
+  --focus-visible-width: 4px;
+  --blue-light-filter: sepia(0.15) saturate(0.8);
+  
+  /* Transitions */
+  --transition-quick: 150ms ease-in-out;
+  --transition-medium: 300ms ease-in-out;
+  
+  /* Border Radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  
+  /* Animation */
+  --animation-quick: 150ms;
+  --animation-standard: 300ms;
+}
+
+/* Dark Theme Class */
+.dark-theme {
+  --color-background: var(--dark-background);
+  --color-surface: var(--dark-surface);
+  --color-primary: var(--dark-primary);
+  --color-secondary: var(--dark-secondary);
+  --color-text-primary: var(--dark-text-primary);
+  --color-text-secondary: var(--dark-text-secondary);
+  
+  /* Shadow adjustments for dark theme */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* Eye-Care Theme Class */
+.eye-care-theme {
+  --color-background: var(--eye-care-background);
+  --color-surface: var(--eye-care-surface);
+  --color-primary: var(--eye-care-primary);
+  --color-secondary: var(--eye-care-primary);
+  --color-text-primary: var(--eye-care-text-primary);
+  --color-text-secondary: var(--eye-care-text-primary);
+  
+  /* Apply blue light filter */
+  filter: var(--blue-light-filter);
+}
+
+/* Typography Styles */
+body {
+  font-family: var(--font-base);
+  font-size: var(--size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  transition: background-color var(--transition-medium), color var(--transition-medium);
+}
+
+h1 {
+  font-size: var(--size-h1);
+  line-height: var(--line-height-h1);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--spacing-5);
+}
+
+h2 {
+  font-size: var(--size-h2);
+  line-height: var(--line-height-h2);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--spacing-4);
+}
+
+/* Input Styles */
+input, textarea {
+  font-family: var(--font-mono);
+  font-size: var(--size-input);
+  line-height: var(--line-height-input);
+  letter-spacing: var(--letter-spacing-input);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-text-secondary);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-3) var(--spacing-4);
+  transition: border-color var(--transition-quick);
+}
+
+input:focus, textarea:focus {
+  outline: var(--focus-outline);
+  border-color: var(--color-primary);
+}
+
+/* Button Styles */
+button {
+  font-family: var(--font-base);
+  font-weight: var(--weight-semibold);
+  font-size: var(--size-body);
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-2) var(--spacing-4);
+  cursor: pointer;
+  transition: background-color var(--transition-quick), transform var(--transition-quick);
+}
+
+button:hover {
+  background-color: var(--color-secondary);
+  transform: translateY(-1px);
+}
+
+button:focus {
+  outline: var(--focus-outline);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button.secondary {
+  background-color: var(--color-secondary);
+}
+
+button.neutral {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-text-secondary);
+}
+
+/* Card Styles */
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-4);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-4);
+  transition: box-shadow var(--transition-quick);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Session Flow Steps */
+.session-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: var(--spacing-2);
+}
+
+.step-indicator {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-2);
+  font-weight: var(--weight-bold);
+  transition: background-color var(--transition-quick), color var(--transition-quick);
+}
+
+.step-active .step-indicator {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.step-completed .step-indicator {
+  background-color: var(--color-secondary);
+  color: white;
+  border-color: var(--color-secondary);
+}
+
+/* Feedback Styles */
+.feedback-canvas {
+  height: 30px;
+  margin: var(--spacing-2) 0;
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-sm);
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: var(--color-surface);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: var(--spacing-2) 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--color-primary);
+  transition: width var(--transition-quick);
+}
+
+/* Toast Notification */
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  max-width: 300px;
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: toast-in var(--animation-quick) forwards, 
+             toast-out var(--animation-quick) forwards var(--animation-standard);
+}
+
+@keyframes toast-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+/* Sparkline Visualization */
+.sparkline {
+  height: 50px;
+  width: 100%;
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-2);
+  position: relative;
+}
+
+.sparkline-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: var(--color-secondary);
+  border-radius: 50%;
+}
+
+.sparkline-line {
+  position: absolute;
+  height: 2px;
+  background-color: var(--color-primary);
+}
+
+/* Difficulty Badges */
+.difficulty-badge {
+  display: inline-block;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
+  margin-right: var(--spacing-2);
+}
+
+.difficulty-high {
+  background-color: #F44336;
+  color: white;
+}
+
+.difficulty-medium {
+  background-color: #FFC107;
+  color: var(--color-text-primary);
+}
+
+.difficulty-low {
+  background-color: #4CAF50;
+  color: white;
+}
+
+/* Calendar Styles for Habit Tracking */
+.calendar-day {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--spacing-1);
+  font-size: 14px;
+  transition: background-color var(--transition-quick);
+}
+
+.calendar-day-active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.calendar-day-inactive {
+  border: 1px solid var(--color-text-secondary);
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation-duration: 0.001ms !important;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  :root {
+    --size-body: 14px;
+    --size-input: 16px;
+    --size-h1: 24px;
+    --size-h2: 20px;
+  }
+  
+  .card {
+    padding: var(--spacing-3);
+  }
+  
+  .session-step {
+    margin: var(--spacing-1);
+  }
+}

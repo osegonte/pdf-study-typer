@@ -8,6 +8,8 @@ import time
 import uuid  
 from integration.sequential_practice_ui import SequentialPracticeUI
 from direct_practice_module import DirectPracticeModule
+from design_system import TypingStudyDesignSystem
+from session_manager import StudySessionManager
 # Add the current directory to Python's path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
@@ -37,50 +39,78 @@ class PDFStudyTypingTrainer:
         self.root = root
         self.root.title("PDF Study Typing Trainer")
         self.root.geometry("900x700")
-        
-        # Initialize components
+        self.design_system = TypingStudyDesignSystem(self.root)
+    
+        # Initialize design system
+        self.design_system = TypingStudyDesignSystem(self.root)
+    
         self.study_items = []
         self.study_collection = StudyItemCollection()
         self.challenge_generator = ChallengeGenerator()
         self.learning_tracker = LearningTracker()
         self.study_formatter = StudyFormatter()
         self.current_challenge = None
-        
+    
+        # Streak tracking (optional for now)
+        self.streak_days = 0
+    
         # Data directories
         self.data_dir = os.path.join(current_dir, "data")
         os.makedirs(self.data_dir, exist_ok=True)
-        
+    
         # Create UI
         self._create_ui()
-        
+      
         # Load previous progress if available
         self._try_load_progress()
     
     def _create_ui(self):
         """Create the application UI"""
-        # Create notebook for tabs
-        self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill=tk.BOTH, expand=True)
-        # Create tabs
-        self.home_tab = ttk.Frame(self.notebook)  # Add this line
-        self.dashboard_tab = ttk.Frame(self.notebook)
-        self.study_tab = ttk.Frame(self.notebook)
-        self.stats_tab = ttk.Frame(self.notebook)
-        self.text_input_tab = ttk.Frame(self.notebook)
-        # Add home tab first, then other tabs
-        self.notebook.add(self.home_tab, text="Home")  # Add this line
-        self.notebook.add(self.dashboard_tab, text="Dashboard")
-        self.notebook.add(self.study_tab, text="Study")
-        self.notebook.add(self.stats_tab, text="Statistics")
-        self.notebook.add(self.text_input_tab, text="Add Text")
-        # Set up tabs
-        self._setup_home_tab()  # Add this line 
-        self._setup_dashboard()
-        self._setup_study_tab()
-        self._setup_stats_tab()
-        self._setup_text_input_tab()
-        self._setup_sequential_practice()
+        # Create a simple frame to hold the UI
+        main_frame = ttk.Frame(self.root)
+        main_frame.pack(fill=tk.BOTH, expand=True)
+    
+        # Add a toggle for web UI vs native UI
+        use_web_ui = tk.BooleanVar(value=False)
+        ttk.Checkbutton(main_frame, text="Use Web UI", 
+                       variable=use_web_ui, 
+                       command=self._toggle_ui).pack()
+    
+        # Create the direct practice module
+        self.direct_practice = DirectPracticeModule(main_frame, self)
 
+    def _toggle_ui(self):
+        """Toggle between native and web UI"""
+        # Hide current UI
+        for child in self.main_frame.winfo_children():
+            child.pack_forget()
+    
+        if self.use_web_ui.get():
+            create_web_ui(self.main_frame)
+        else:
+            self.direct_practice = DirectPracticeModule(self.main_frame, self)
+    
+    
+    def _start_structured_session(self):
+        """Start a structured 20-minute study session"""
+        if not self.study_items:
+            messagebox.showinfo("No Study Items", "No study items to study.")
+            return
+    
+        # Switch to structured session tab
+        for i in range(self.notebook.index("end")):
+            if "20-Min Session" in self.notebook.tab(i, "text"):
+                self.notebook.select(i)
+                break
+    
+        # Start session
+        self.session_manager._start_session()
+    
+    def _setup_structured_session_tab(self):
+        """Set up the structured 20-minute session tab"""
+        # Create session manager in the structured tab
+        self.session_manager = StudySessionManager(self.structured_tab, self, self.design_system)
+    
     def _setup_home_tab(self):
         """Set up the new home tab with direct practice module"""
         # Create and initialize the direct practice module
@@ -106,71 +136,84 @@ class PDFStudyTypingTrainer:
         self.notebook.add(self.sequential_tab, text="Sequential Practice")
         self.sequential_practice_ui = SequentialPracticeUI(self.sequential_tab, self)
     
+   
     def _setup_dashboard(self):
         """Set up the dashboard tab"""
-        self.sequential_tab = ttk.Frame(self.notebook)
-        # Header
+         # Header
         header_frame = ttk.Frame(self.dashboard_tab)
         header_frame.pack(fill=tk.X, padx=20, pady=10)
-        
+    
         ttk.Label(header_frame, text="PDF Study Typing Trainer", 
                   font=("Arial", 16, "bold")).pack(side=tk.LEFT)
-        
+    
         # Main content
         content_frame = ttk.Frame(self.dashboard_tab)
         content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-        
+     
         # Left panel - PDF selection and info
         left_panel = ttk.LabelFrame(content_frame, text="PDF Management")
         left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        # Open PDF button
+    
+         # Open PDF button
         ttk.Button(left_panel, text="Open PDF", 
                    command=self._open_pdf).pack(fill=tk.X, padx=10, pady=5)
-        
+    
         # Load saved progress button
         ttk.Button(left_panel, text="Load Saved Progress", 
                    command=self._load_saved_progress).pack(fill=tk.X, padx=10, pady=5)
-        
+    
         # PDF info
         self.pdf_info_frame = ttk.LabelFrame(left_panel, text="Current PDF Information")
         self.pdf_info_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
+    
         self.pdf_name_var = tk.StringVar(value="No PDF loaded")
         self.items_count_var = tk.StringVar(value="Study items: 0")
         self.extraction_date_var = tk.StringVar(value="Last extracted: N/A")
-        
+    
         ttk.Label(self.pdf_info_frame, textvariable=self.pdf_name_var).pack(anchor=tk.W, pady=2)
         ttk.Label(self.pdf_info_frame, textvariable=self.items_count_var).pack(anchor=tk.W, pady=2)
         ttk.Label(self.pdf_info_frame, textvariable=self.extraction_date_var).pack(anchor=tk.W, pady=2)
-        
+    
         # Right panel - Study info and actions
         right_panel = ttk.LabelFrame(content_frame, text="Study Management")
         right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
+    
         # Due items info
         self.due_items_var = tk.StringVar(value="Items due for review: 0")
         ttk.Label(right_panel, textvariable=self.due_items_var).pack(anchor=tk.W, padx=10, pady=5)
-        
+    
         # Overall progress
         self.mastery_var = tk.StringVar(value="Overall mastery: 0%")
         ttk.Label(right_panel, textvariable=self.mastery_var).pack(anchor=tk.W, padx=10, pady=5)
-        
-        # Start Study button
-        self.study_btn = ttk.Button(right_panel, text="Start Study Session", 
+    
+        # Start Study buttons
+        buttons_frame = ttk.Frame(right_panel)  # This creates the buttons_frame
+        buttons_frame.pack(fill=tk.X, padx=10, pady=20)
+    
+        # Regular study button
+        self.study_btn = ttk.Button(buttons_frame, text="Start Study Session", 
                                     command=self._start_study, state=tk.DISABLED)
-        self.study_btn.pack(fill=tk.X, padx=10, pady=20)
-        
+        self.study_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+      
+        # 20-min structured session button
+        self.structured_btn = ttk.Button(
+            buttons_frame, 
+            text="Start 20-Min Session", 
+            command=self._start_structured_session
+        )
+        self.structured_btn.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=5)
+        self.structured_btn.config(state=tk.DISABLED)
+    
         # Export options frame
         export_frame = ttk.LabelFrame(right_panel, text="Export Options")
         export_frame.pack(fill=tk.BOTH, padx=10, pady=10)
-        
+    
         ttk.Button(export_frame, text="Export to Taipo Format", 
                    command=self._export_taipo_format).pack(fill=tk.X, padx=5, pady=5)
-        
-        ttk.Button(export_frame, text="Export as Word List", 
-                   command=self._export_word_list).pack(fill=tk.X, padx=5, pady=5)
     
+        ttk.Button(export_frame, text="Export as Word List", 
+                   command=self._export_word_list).pack(fill=tk.X, padx=5, pady=5) 
+  
     def _setup_study_tab(self):
         """Set up the study tab"""
         # Top frame for prompt
