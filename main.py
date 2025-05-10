@@ -102,16 +102,33 @@ class PDFStudyTypingTrainer:
         self.direct_practice = DirectPracticeModule(self.main_frame, self)
 
     def _launch_web_ui(self):
-        """Launch the web-based UI in a browser"""
+        """Launch the web-based UI"""
         from api_server import launch_web_ui
         import threading
+        import subprocess
+        import sys
+        import threading
+        from api_server import run_server
     
-        # Run the web server in a separate thread
-        threading.Thread(target=launch_web_ui, daemon=True).start()
+        # Use subprocess to run the Flask server as a separate process
+        flask_process = subprocess.Popen([
+            sys.executable,
+            'api_server.py'
+        ])
     
-        # Show a message
-        messagebox.showinfo("Web UI", "Launching web interface in your browser...")
+        # Store the process reference to terminate it when needed
+        self.flask_process = flask_process
+        self.flask_thread = threading.Thread(target=run_server, daemon=True)
+        self.flask_thread.start()
 
+      
+    # You might need a method to stop the process when closing your app
+        def cleanup():
+            if hasattr(self, 'flask_process'):
+               self.flask_process.terminate()
+    
+    # Attach cleanup to window close event if using Tkinter
+        self.root.protocol("WM_DELETE_WINDOW", cleanup)
     
     
     def _start_structured_session(self):
