@@ -67,28 +67,51 @@ class PDFStudyTypingTrainer:
     def _create_ui(self):
         """Create the application UI"""
         # Create a simple frame to hold the UI
-        main_frame = ttk.Frame(self.root)
-        main_frame.pack(fill=tk.BOTH, expand=True)
-    
-        # Add a toggle for web UI vs native UI
-        use_web_ui = tk.BooleanVar(value=False)
-        ttk.Checkbutton(main_frame, text="Use Web UI", 
-                       variable=use_web_ui, 
-                       command=self._toggle_ui).pack()
-    
-        # Create the direct practice module
-        self.direct_practice = DirectPracticeModule(main_frame, self)
+        self.main_frame = ttk.Frame(self.root)
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
 
+        # Add a toggle for web UI vs native UI
+        self.use_web_ui = tk.BooleanVar(value=False)
+        ttk.Checkbutton(self.main_frame, text="Use Web UI", 
+                       variable=self.use_web_ui, 
+                       command=self._toggle_ui).pack()
+
+        # Create the direct practice module
+        self.direct_practice = DirectPracticeModule(self.main_frame, self)
+    
     def _toggle_ui(self):
         """Toggle between native and web UI"""
-        # Hide current UI
-        for child in self.main_frame.winfo_children():
-            child.pack_forget()
-    
         if self.use_web_ui.get():
-            create_web_ui(self.main_frame)
+           self._launch_web_ui()
         else:
+            # Clear the frame
+            for child in self.main_frame.winfo_children():
+                child.pack_forget()
+        
+            # Create the direct practice module
             self.direct_practice = DirectPracticeModule(self.main_frame, self)
+    
+    def _create_web_ui(self):
+        """Create a web-based UI using embedded browser frame"""
+        import tkinter.messagebox as messagebox
+    
+        # Display message that web UI is not yet implemented
+        messagebox.showinfo("Web UI", "Web UI is not yet implemented. Using native UI instead.")
+    
+        # Fall back to direct practice module
+        self.direct_practice = DirectPracticeModule(self.main_frame, self)
+
+    def _launch_web_ui(self):
+        """Launch the web-based UI in a browser"""
+        from api_server import launch_web_ui
+        import threading
+    
+        # Run the web server in a separate thread
+        threading.Thread(target=launch_web_ui, daemon=True).start()
+    
+        # Show a message
+        messagebox.showinfo("Web UI", "Launching web interface in your browser...")
+
     
     
     def _start_structured_session(self):

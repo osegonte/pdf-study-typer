@@ -12,60 +12,13 @@ CORS(app)  # Enable Cross-Origin Resource Sharing
 
 @app.route('/api/parse-pdf', methods=['POST'])
 def parse_pdf():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
-        
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
-        
-    # Save the uploaded file temporarily
-    temp_path = 'temp/' + file.filename
-    os.makedirs('temp', exist_ok=True)
-    file.save(temp_path)
-    
-    # Process the PDF
-    try:
-        extractor = PDFStudyExtractor(temp_path)
-        extractor.process()
-        items = extractor.get_study_items()
-        
-        # Convert items to serializable format
-        serialized_items = [item.to_dict() for item in items]
-        
-        # Remove temporary file
-        os.remove(temp_path)
-        
-        return jsonify({
-            'items': serialized_items,
-            'count': len(serialized_items)
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    # ... existing code ...
 
 @app.route('/api/parse-text', methods=['POST'])
 def parse_text():
-    data = request.json
-    if not data or 'text' not in data:
-        return jsonify({'error': 'No text provided'}), 400
-        
-    # Process the text
-    try:
-        parser = TextParser(data['text'])
-        parser.parse()
-        items = parser.get_study_items()
-        
-        # Convert items to serializable format
-        serialized_items = [item.to_dict() for item in items]
-        
-        return jsonify({
-            'items': serialized_items,
-            'count': len(serialized_items)
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    # ... existing code ...
 
-# Serve the React app
+# Serve the React app for any other routes
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
@@ -73,6 +26,21 @@ def serve(path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
+
+# Add a function to launch the web UI
+def launch_web_ui(port=5000):
+    """Launch the web UI in the default browser"""
+    import webbrowser
+    import threading
+    
+    def open_browser():
+        webbrowser.open(f'http://localhost:{port}')
+    
+    # Start the browser after a short delay
+    threading.Timer(1.5, open_browser).start()
+    
+    # Run the Flask app
+    app.run(debug=True, port=port)
 
 if __name__ == '__main__':
     app.run(debug=True)
